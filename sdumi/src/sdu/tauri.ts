@@ -15,9 +15,25 @@ async function getInvoke(): Promise<InvokeFn> {
   return core.invoke as InvokeFn;
 }
 
-export async function sduLogin(username: string, password: string): Promise<boolean> {
+export interface LoginResult {
+  status: "ok" | "otp" | "invalid";
+  html: string; // 2FA page HTML when status === "otp"
+}
+
+export interface PostResult {
+  html: string;
+  authenticated: boolean;
+}
+
+export async function sduLogin(username: string, password: string): Promise<LoginResult> {
   const invoke = await getInvoke();
-  return invoke<boolean>("sdu_login", { username, password });
+  return invoke<LoginResult>("sdu_login", { username, password });
+}
+
+// Generic authenticated POST (drives 2FA code submit, term selection, etc.).
+export async function sduPost(url: string, fields: [string, string][]): Promise<PostResult> {
+  const invoke = await getInvoke();
+  return invoke<PostResult>("sdu_post", { url, fields });
 }
 
 export async function sduFetch(module: string): Promise<string> {

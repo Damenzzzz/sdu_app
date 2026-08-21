@@ -1,10 +1,10 @@
 // Local scraper for my.sdu.edu.kz.
 //
-// SAFE BY DESIGN: this runs entirely on the student's machine. The password is
-// passed in from the app (backed by the OS secure store) only to perform the
-// login POST — it is never persisted here and never sent anywhere except SDU's
-// own login endpoint. The authenticated session cookie lives in this process's
-// in-memory cookie jar and the fetched HTML is returned to the local frontend.
+// SAFE BY DESIGN: this runs entirely on the student's machine. The password and
+// 2FA code are passed in from the app only to perform the login POSTs — they are
+// never persisted here and never sent anywhere except SDU's own endpoints. The
+// authenticated session cookie lives in this process's in-memory cookie jar and
+// the fetched HTML is returned to the local frontend.
 
 use std::sync::Mutex;
 
@@ -37,24 +37,58 @@ impl Default for SduState {
     }
 }
 
+#[derive(serde::Serialize)]
+pub struct LoginResult {
+    /// "ok" (fully signed in), "otp" (2FA code required), or "invalid".
+    status: String,
+    /// The 2FA page HTML when status == "otp", so the frontend can parse the
+    /// code form; empty otherwise.
+    html: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct PostResult {
+    html: String,
+    authenticated: bool,
+}
+
 fn looks_authenticated(html: &str) -> bool {
-    // The logged-in dashboard exposes module links and a "Last Login" banner.
     let authed = html.contains("Last Login")
         || html.contains("mod=schedule")
         || html.contains("mod=transkript")
         || html.to_lowercase().contains("logout");
-    // The login page renders the credential form posting to loginAuth.php.
     let is_login_page = html.contains("loginAuth.php") && html.contains("name=\"password\"");
     authed && !is_login_page
 }
 
-/// Attempt to log in. Returns Ok(true) on success, Ok(false) on bad credentials.
+/// Decide which login stage a response HTML represents.
+fn detect_stage(html: &str) -> &'static str {
+    if looks_authenticated(html) {
+        return "ok";
+    }
+    let low = html.to_lowercase();
+    let has_password = low.contains("type=\"password\"") || low.contains("name=\"password\"");
+    let mentions_code = low.contains("verif")
+        || low.contains("otp")
+        || low.contains("one-time")
+        || low.contains("код")
+        || low.contains("e-mail")
+        || low.contains("authenticat")
+        || low.contains("6-digit")
+        || low.contains("6 digit");
+    if mentions_code && !has_password {
+        return "otp";
+    }
+    "invalid"
+}
+
+/// Step 1: submit credentials. Returns status "ok" | "otp" | "invalid".
 #[tauri::command]
 pub async fn sdu_login(
     state: tauri::State<'_, SduState>,
     username: String,
     password: String,
-) -> Result<bool, String> {
+) -> Result<LoginResult, String> {
     // Prime the session cookie by loading the login page first.
     state
         .client
@@ -70,32 +104,58 @@ pub async fn sdu_login(
         ("LogIn", "Log in"),
     ];
 
-    let res = state
+    let body = state
         .client
         .post(format!("{BASE}/loginAuth.php"))
         .form(&params)
         .send()
         .await
-        .map_err(|e| format!("login request failed: {e}"))?;
-
-    let body = res.text().await.map_err(|e| e.to_string())?;
-
-    // Some deployments answer the POST with a redirect to index.php that is
-    // followed automatically; others return a thin page. Confirm by loading the
-    // home page and checking for the authenticated markers.
-    let home = state
-        .client
-        .get(format!("{BASE}/index.php"))
-        .send()
-        .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("login request failed: {e}"))?
         .text()
         .await
         .map_err(|e| e.to_string())?;
 
-    let success = looks_authenticated(&body) || looks_authenticated(&home);
-    *state.logged_in.lock().unwrap() = success;
-    Ok(success)
+    let stage = detect_stage(&body);
+    *state.logged_in.lock().unwrap() = stage == "ok";
+    let html = if stage == "otp" { body } else { String::new() };
+    Ok(LoginResult {
+        status: stage.to_string(),
+        html,
+    })
+}
+
+/// Generic authenticated POST used to drive multi-step flows (e.g. submitting
+/// the 2FA code, or picking a term). `url` may be absolute or relative to BASE.
+/// `fields` is an ordered list of form key/value pairs.
+#[tauri::command]
+pub async fn sdu_post(
+    state: tauri::State<'_, SduState>,
+    url: String,
+    fields: Vec<(String, String)>,
+) -> Result<PostResult, String> {
+    let full = if url.starts_with("http") {
+        url
+    } else {
+        format!("{BASE}/{}", url.trim_start_matches('/'))
+    };
+    let html = state
+        .client
+        .post(full)
+        .form(&fields)
+        .send()
+        .await
+        .map_err(|e| format!("post failed: {e}"))?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+    let authenticated = looks_authenticated(&html);
+    if authenticated {
+        *state.logged_in.lock().unwrap() = true;
+    }
+    Ok(PostResult {
+        html,
+        authenticated,
+    })
 }
 
 /// Fetch a SIS module page as raw HTML (e.g. module = "schedule", "grades",
@@ -106,7 +166,6 @@ pub async fn sdu_fetch(
     module: String,
 ) -> Result<String, String> {
     {
-        // Scope the guard so it is released before any await point.
         if !*state.logged_in.lock().unwrap() {
             return Err("not signed in".into());
         }
@@ -125,14 +184,12 @@ pub async fn sdu_fetch(
     res.text().await.map_err(|e| e.to_string())
 }
 
-/// Whether the in-memory session is currently authenticated.
 #[tauri::command]
 pub async fn sdu_is_logged_in(state: tauri::State<'_, SduState>) -> Result<bool, String> {
     let v = *state.logged_in.lock().unwrap();
     Ok(v)
 }
 
-/// Clear the local session flag (best-effort server logout too).
 #[tauri::command]
 pub async fn sdu_logout(state: tauri::State<'_, SduState>) -> Result<(), String> {
     *state.logged_in.lock().unwrap() = false;
