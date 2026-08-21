@@ -28,11 +28,21 @@ export function Schedule() {
           setCourses(parsed.courses);
           setLive(true);
         } else {
-          const hasTable = html.includes("clTbl");
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const title = doc.querySelector("title")?.textContent?.trim() ?? "(no title)";
+          const markers = [
+            html.includes("loginAuth.php") && "login-form",
+            html.includes("Last Login") && "dashboard",
+            html.includes("mod=schedule") && "nav-links",
+            html.includes("clsTbl") && "term-form",
+            html.includes("clTbl") && "grid-table",
+            html.includes("Day/Hour") && "grid-headers",
+            /Пн|Вт|Ср/.test(html) && "weekdays",
+          ]
+            .filter(Boolean)
+            .join(", ");
           setError(
-            hasTable
-              ? `Signed in, but the schedule table couldn't be parsed (found the table, 0 lessons). HTML length ${html.length}. Parser needs a tweak.`
-              : `Signed in, but no schedule table on the page (HTML length ${html.length}). It may need a term selection or you're not fully signed in.`
+            `DIAG · title="${title}" · len=${html.length} · markers=[${markers}] · no grid parsed. Copy this to Claude.`
           );
         }
       })
