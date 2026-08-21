@@ -14,7 +14,11 @@ export function Schedule() {
   const [live, setLive] = useState(false);
 
   useEffect(() => {
-    if (!isTauri()) return; // browser preview: keep mock data
+    if (!isTauri()) {
+      // Browser preview (Vite): no scraper backend available.
+      setError("Demo mode — you're viewing the browser preview. Open the SDUmi desktop app for live SIS data.");
+      return;
+    }
     setLoading(true);
     sduFetch("schedule")
       .then((html) => {
@@ -24,16 +28,18 @@ export function Schedule() {
           setCourses(parsed.courses);
           setLive(true);
         } else {
-          setError("Couldn't read your schedule from SIS — showing a sample.");
+          const hasTable = html.includes("clTbl");
+          setError(
+            hasTable
+              ? `Signed in, but the schedule table couldn't be parsed (found the table, 0 lessons). HTML length ${html.length}. Parser needs a tweak.`
+              : `Signed in, but no schedule table on the page (HTML length ${html.length}). It may need a term selection or you're not fully signed in.`
+          );
         }
       })
-      .catch((e) =>
-        setError(
-          typeof e === "string" && e.includes("not signed in")
-            ? "Session expired — please log out and sign in again."
-            : "Failed to load schedule from SIS — showing a sample."
-        )
-      )
+      .catch((e) => {
+        const msg = typeof e === "string" ? e : (e as Error)?.message ?? String(e);
+        setError(`SIS fetch error: ${msg}`);
+      })
       .finally(() => setLoading(false));
   }, []);
 
