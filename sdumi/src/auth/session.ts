@@ -1,17 +1,18 @@
 // Auth/session handling.
 //
-// SAFE-BY-DESIGN: the my.sdu.edu.kz password never leaves this device and is
-// never sent to SDUmi servers. In the packaged Tauri app it is stored in the
-// OS secure store via the Stronghold plugin; the scraper runs locally, logs in
-// on the user's behalf, and persists only the resulting data.
-//
-// During browser dev we only keep a lightweight "signed in" flag + display name.
+// SAFE-BY-DESIGN: inside the Tauri app the my.sdu.edu.kz password is sent only
+// to SDU's own login endpoint by the local Rust scraper — never to SDUmi
+// servers, and it is not persisted (you re-enter it each launch). In a plain
+// browser (Vite preview) there is no backend, so we run a lightweight demo mode.
 
 import { loadJSON, saveJSON } from "../store/persist";
+import { isTauri, sduLogin, sduFetch, sduLogout } from "../sdu/tauri";
+import { parseStudentName } from "../sdu/schedule";
 
 export interface Session {
   studentId: string;
   studentName: string;
+  real: boolean; // true = authenticated against SDU; false = browser demo
 }
 
 const KEY = "session";
@@ -20,18 +21,42 @@ export function getSession(): Session | null {
   return loadJSON<Session | null>(KEY, null);
 }
 
-// Placeholder auth. Real implementation: invoke a Rust command that stores the
-// password in Stronghold and runs the scraper login against my.sdu.edu.kz.
-export async function signIn(studentId: string, _password: string): Promise<Session> {
-  // Derive a friendly display name from the ID for the demo.
+export async function signIn(studentId: string, password: string): Promise<Session> {
+  if (isTauri()) {
+    const ok = await sduLogin(studentId, password);
+    if (!ok) throw new Error("Invalid SDU ID or password.");
+
+    let studentName = "Student " + studentId.slice(-4);
+    try {
+      const home = await sduFetch("");
+      const parsed = parseStudentName(home);
+      if (parsed) studentName = parsed;
+    } catch {
+      /* keep the fallback name */
+    }
+
+    const session: Session = { studentId, studentName, real: true };
+    saveJSON(KEY, session);
+    return session;
+  }
+
+  // Browser demo fallback — no real network, just let the UI run on mock data.
   const session: Session = {
     studentId,
     studentName: "Student " + studentId.slice(-4),
+    real: false,
   };
   saveJSON(KEY, session);
   return session;
 }
 
-export function signOut() {
+export async function signOut(): Promise<void> {
+  if (isTauri()) {
+    try {
+      await sduLogout();
+    } catch {
+      /* ignore */
+    }
+  }
   saveJSON<Session | null>(KEY, null);
 }
