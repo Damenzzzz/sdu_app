@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { Sidebar, type ViewKey } from "./components/Sidebar";
 import { Dashboard } from "./views/Dashboard";
@@ -12,11 +12,46 @@ import { Settings } from "./views/Settings";
 import { Login } from "./views/Login";
 import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
+import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
 
 function App() {
   const [session, setSession] = useState<Session | null>(() => getSession());
+  const [validating, setValidating] = useState(true);
   const [view, setView] = useState<ViewKey>("dashboard");
   const dailies = useDailies();
+
+  // A stored session in the desktop app is only valid if the Rust scraper still
+  // holds an authenticated SIS session (its cookie jar is per-process, so it is
+  // empty after a restart). If not, drop the stale session and force re-login.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const s = getSession();
+      if (s && s.real && isTauri()) {
+        try {
+          const ok = await sduIsLoggedIn();
+          if (!ok && !cancelled) {
+            await signOut();
+            setSession(null);
+          }
+        } catch {
+          /* ignore */
+        }
+      } else if (s && !s.real && isTauri()) {
+        // Stale demo session inside the desktop app — clear it so real login runs.
+        await signOut();
+        setSession(null);
+      }
+      if (!cancelled) setValidating(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (validating) {
+    return <div className="login-wrap" />;
+  }
 
   if (!session) {
     return <Login onSignedIn={setSession} />;
