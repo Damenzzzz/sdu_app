@@ -18,8 +18,8 @@ export function Login({ onSignedIn }: { onSignedIn: (s: Session) => void }) {
     try {
       const s = await signIn(id.trim(), pw);
       onSignedIn(s);
-    } catch {
-      setErr("Could not sign in. Check your credentials.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not sign in. Check your credentials.");
     } finally {
       setBusy(false);
     }
