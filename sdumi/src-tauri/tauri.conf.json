@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "sdumi",
+  "productName": "SDUmi",
   "version": "0.1.0",
   "identifier": "com.chebupel777.sdumi",
   "build": {
@@ -12,9 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "sdumi",
-        "width": 800,
-        "height": 600
+        "title": "SDUmi",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 940,
+        "minHeight": 640,
+        "resizable": true,
+        "center": true,
+        "theme": "Dark"
       }
     ],
     "security": {
