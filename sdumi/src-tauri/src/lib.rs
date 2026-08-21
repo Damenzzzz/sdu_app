@@ -9,6 +9,7 @@ pub fn run() {
         .manage(SduState::new())
         .invoke_handler(tauri::generate_handler![
             scraper::sdu_login,
+            scraper::sdu_post,
             scraper::sdu_fetch,
             scraper::sdu_is_logged_in,
             scraper::sdu_logout,
