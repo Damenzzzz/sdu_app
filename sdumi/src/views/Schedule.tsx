@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { schedule as mockSchedule, courses as mockCourses } from "../data/mock";
 import type { Course, ScheduleEntry } from "../data/types";
-import { isTauri, sduFetch } from "../sdu/tauri";
-import { parseScheduleHtml } from "../sdu/schedule";
+import { isTauri } from "../sdu/tauri";
+import { fetchLiveSchedule } from "../sdu/schedule";
 
 const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -20,35 +20,21 @@ export function Schedule() {
       return;
     }
     setLoading(true);
-    sduFetch("schedule")
-      .then((html) => {
-        const parsed = parseScheduleHtml(html);
+    fetchLiveSchedule()
+      .then((parsed) => {
         if (parsed.entries.length) {
           setEntries(parsed.entries);
           setCourses(parsed.courses);
           setLive(true);
         } else {
-          const doc = new DOMParser().parseFromString(html, "text/html");
-          const title = doc.querySelector("title")?.textContent?.trim() ?? "(no title)";
-          const markers = [
-            html.includes("loginAuth.php") && "login-form",
-            html.includes("Last Login") && "dashboard",
-            html.includes("mod=schedule") && "nav-links",
-            html.includes("clsTbl") && "term-form",
-            html.includes("clTbl") && "grid-table",
-            html.includes("Day/Hour") && "grid-headers",
-            /Пн|Вт|Ср/.test(html) && "weekdays",
-          ]
-            .filter(Boolean)
-            .join(", ");
           setError(
-            `DIAG · title="${title}" · len=${html.length} · markers=[${markers}] · no grid parsed. Copy this to Claude.`
+            `Signed in (term ${parsed.term ?? "?"}), but no lessons were parsed from the grid. It may be an empty week — copy this to Claude if your schedule isn't empty.`
           );
         }
       })
       .catch((e) => {
         const msg = typeof e === "string" ? e : (e as Error)?.message ?? String(e);
-        setError(`SIS fetch error: ${msg}`);
+        setError(`SIS error: ${msg}`);
       })
       .finally(() => setLoading(false));
   }, []);
