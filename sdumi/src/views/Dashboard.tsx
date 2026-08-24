@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import type { Daily } from "../data/types";
 import { leaderboard } from "../data/mock";
 import { useSchedule } from "../sdu/useSchedule";
 import { currentStreak } from "../store/streak";
+import { celebrate } from "../components/Confetti";
 import { Icon } from "../components/Icon";
 import type { ViewKey } from "../components/Sidebar";
 
@@ -33,6 +35,12 @@ export function Dashboard({
     .findIndex((r) => r.isMe) + 1;
   const pct = dailies.total ? Math.round((dailies.doneCount / dailies.total) * 100) : 0;
   const pending = dailies.items.filter((d) => !d.done);
+  const allDone = dailies.total > 0 && dailies.doneCount === dailies.total;
+
+  // Celebrate the moment every task is done.
+  useEffect(() => {
+    if (allDone) celebrate();
+  }, [allDone]);
 
   return (
     <div className="fade-in">
@@ -41,6 +49,9 @@ export function Dashboard({
           <div className="page-title">Welcome back, {studentName.split(" ")[0]} 👋</div>
           <div className="page-sub">Here's your {dayNames[ti]} at a glance</div>
         </div>
+        <button className="btn btn-primary" onClick={celebrate}>
+          <Icon name="sparkles" size={16} /> Celebrate
+        </button>
       </div>
 
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
@@ -113,7 +124,7 @@ export function Dashboard({
 
 function StatTile({ label, value, icon, tint }: { label: string; value: string; icon: any; tint?: string }) {
   return (
-    <div className="card stat">
+    <div className="card stat lift">
       <div className="stat-row" style={{ justifyContent: "space-between" }}>
         <span className="stat-label">{label}</span>
         <span style={{ color: tint ?? "var(--accent)" }}><Icon name={icon} size={18} /></span>
