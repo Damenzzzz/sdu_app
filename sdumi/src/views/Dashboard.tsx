@@ -1,6 +1,7 @@
 import type { Daily } from "../data/types";
 import { leaderboard } from "../data/mock";
 import { useSchedule } from "../sdu/useSchedule";
+import { currentStreak } from "../store/streak";
 import { Icon } from "../components/Icon";
 import type { ViewKey } from "../components/Sidebar";
 
@@ -26,7 +27,6 @@ export function Dashboard({
   const todays = entries
     .filter((s) => s.day === ti)
     .sort((a, b) => a.start.localeCompare(b.start));
-  const me = leaderboard.find((r) => r.isMe);
   const myRank = leaderboard
     .slice()
     .sort((a, b) => b.points - a.points)
@@ -46,7 +46,7 @@ export function Dashboard({
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
         <StatTile label="Today's classes" value={String(todays.length)} icon="calendar" />
         <StatTile label="Tasks done" value={`${dailies.doneCount}/${dailies.total}`} icon="check" />
-        <StatTile label="Streak" value={`${me?.streak ?? 0} days`} icon="flame" tint="var(--amber)" />
+        <StatTile label="Streak" value={`${currentStreak()} days`} icon="flame" tint="var(--amber)" />
         <StatTile label="Rank" value={`#${myRank}`} icon="trophy" tint="var(--accent-2)" />
       </div>
 

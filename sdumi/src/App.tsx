@@ -17,6 +17,7 @@ import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
 import { isBackendConfigured } from "./backend/config";
 import { pushPresence, computeScore } from "./backend/leaderboard";
 import { loadJSON } from "./store/persist";
+import { currentStreak } from "./store/streak";
 
 function App() {
   const [session, setSession] = useState<Session | null>(() => getSession());
@@ -62,7 +63,7 @@ function App() {
         id: session.studentId,
         name: session.studentName,
         points: computeScore(dailies.doneCount, focus),
-        streak: 0,
+        streak: currentStreak(),
       });
     };
     push();
