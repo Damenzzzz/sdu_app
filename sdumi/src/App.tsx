@@ -17,6 +17,7 @@ import { ConfettiLayer } from "./components/Confetti";
 import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
 import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
+import { useClassReminders } from "./sdu/useClassReminders";
 import { isBackendConfigured } from "./backend/config";
 import { pushPresence, computeScore } from "./backend/leaderboard";
 import { loadJSON } from "./store/persist";
@@ -27,6 +28,7 @@ function App() {
   const [validating, setValidating] = useState(true);
   const [view, setView] = useState<ViewKey>("dashboard");
   const dailies = useDailies();
+  useClassReminders(!!session?.real);
 
   // A stored session in the desktop app is only valid if the Rust scraper still
   // holds an authenticated SIS session (its cookie jar is per-process, so it is
