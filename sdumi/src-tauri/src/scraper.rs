@@ -184,6 +184,41 @@ pub async fn sdu_fetch(
     res.text().await.map_err(|e| e.to_string())
 }
 
+/// Fetch a binary resource (e.g. the student photo behind the session) and
+/// return it as a data: URL so the webview can display it directly.
+#[tauri::command]
+pub async fn sdu_fetch_b64(
+    state: tauri::State<'_, SduState>,
+    path: String,
+) -> Result<String, String> {
+    {
+        if !*state.logged_in.lock().unwrap() {
+            return Err("not signed in".into());
+        }
+    }
+    let full = if path.starts_with("http") {
+        path
+    } else {
+        format!("{BASE}/{}", path.trim_start_matches('/'))
+    };
+    let res = state
+        .client
+        .get(full)
+        .send()
+        .await
+        .map_err(|e| format!("image fetch failed: {e}"))?;
+    let ct = res
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("image/jpeg")
+        .to_string();
+    let bytes = res.bytes().await.map_err(|e| e.to_string())?;
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(format!("data:{};base64,{}", ct, b64))
+}
+
 #[tauri::command]
 pub async fn sdu_is_logged_in(state: tauri::State<'_, SduState>) -> Result<bool, String> {
     let v = *state.logged_in.lock().unwrap();

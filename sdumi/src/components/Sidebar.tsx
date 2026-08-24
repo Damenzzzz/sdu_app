@@ -10,6 +10,7 @@ export type ViewKey =
   | "focus"
   | "leaderboard"
   | "ai"
+  | "profile"
   | "settings";
 
 const nav: { key: ViewKey; label: string; icon: IconName }[] = [
@@ -69,7 +70,11 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-foot">
-        <div className="user-card">
+        <div
+          className={`user-card ${active === "profile" ? "active" : ""}`}
+          onClick={() => onNavigate("profile")}
+          style={{ cursor: "pointer" }}
+        >
           <div className="avatar">{initials}</div>
           <div style={{ overflow: "hidden" }}>
             <div style={{ fontWeight: 600, fontSize: 13 }}>{studentName}</div>

@@ -12,6 +12,7 @@ pub fn run() {
             scraper::sdu_login,
             scraper::sdu_post,
             scraper::sdu_fetch,
+            scraper::sdu_fetch_b64,
             scraper::sdu_is_logged_in,
             scraper::sdu_logout,
         ])

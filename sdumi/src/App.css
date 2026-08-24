@@ -113,6 +113,9 @@
 .user-card:hover {
   background: var(--surface-2);
 }
+.user-card.active {
+  background: var(--accent-soft);
+}
 .avatar {
   width: 32px;
   height: 32px;
