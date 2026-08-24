@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { isTauri } from "../sdu/tauri";
 import { fetchTerms, fetchGrades, computeGPA, type GradeRow, type TermOption } from "../sdu/grades";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 import { Icon } from "../components/Icon";
 
 function gradeColor(g: string): string {
@@ -82,16 +83,16 @@ export function Grades() {
             <span className="stat-label">Term GPA</span>
             <span style={{ color: "var(--accent-2)" }}><Icon name="chart" /></span>
           </div>
-          <span className="stat-value">{gpa !== null ? gpa.toFixed(2) : "—"}</span>
+          <span className="stat-value">{gpa !== null ? <AnimatedNumber value={gpa} decimals={2} /> : "—"}</span>
           {gpa === null && <span className="faint" style={{ fontSize: 11.5 }}>in progress / no final grades</span>}
         </div>
         <div className="card stat">
           <span className="stat-label">Courses</span>
-          <span className="stat-value">{rows.length}</span>
+          <span className="stat-value"><AnimatedNumber value={rows.length} /></span>
         </div>
         <div className="card stat">
           <span className="stat-label">Credits{credits ? " graded" : ""}</span>
-          <span className="stat-value">{credits || totalCredits}</span>
+          <span className="stat-value"><AnimatedNumber value={credits || totalCredits} /></span>
         </div>
       </div>
 
