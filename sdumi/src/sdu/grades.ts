@@ -87,6 +87,27 @@ function parseGradeRows(dataHtml: string): GradeRow[] {
   return out;
 }
 
+export interface TermGPA {
+  term: string;
+  label: string;
+  gpa: number;
+}
+
+// GPA for every past term that has final grades (for the trend chart).
+export async function fetchGpaTrend(terms: TermOption[]): Promise<TermGPA[]> {
+  const out: TermGPA[] = [];
+  for (const t of terms) {
+    try {
+      const rows = await fetchGrades(t.value);
+      const { gpa } = computeGPA(rows);
+      if (gpa !== null) out.push({ term: t.value, label: t.label, gpa });
+    } catch {
+      /* skip term on error */
+    }
+  }
+  return out.sort((a, b) => a.term.localeCompare(b.term));
+}
+
 // Weighted GPA from rows that have a real letter grade.
 export function computeGPA(rows: GradeRow[]): { gpa: number | null; credits: number } {
   let points = 0;
