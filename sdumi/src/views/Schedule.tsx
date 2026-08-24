@@ -1,44 +1,9 @@
-import { useEffect, useState } from "react";
-import { schedule as mockSchedule, courses as mockCourses } from "../data/mock";
-import type { Course, ScheduleEntry } from "../data/types";
-import { isTauri } from "../sdu/tauri";
-import { fetchLiveSchedule } from "../sdu/schedule";
+import { useSchedule } from "../sdu/useSchedule";
 
 const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function Schedule() {
-  const [entries, setEntries] = useState<ScheduleEntry[]>(mockSchedule);
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [live, setLive] = useState(false);
-
-  useEffect(() => {
-    if (!isTauri()) {
-      // Browser preview (Vite): no scraper backend available.
-      setError("Demo mode — you're viewing the browser preview. Open the SDUmi desktop app for live SIS data.");
-      return;
-    }
-    setLoading(true);
-    fetchLiveSchedule()
-      .then((parsed) => {
-        if (parsed.entries.length) {
-          setEntries(parsed.entries);
-          setCourses(parsed.courses);
-          setLive(true);
-        } else {
-          setError(
-            `Signed in (term ${parsed.term ?? "?"}), but no lessons were parsed from the grid. It may be an empty week — copy this to Claude if your schedule isn't empty.`
-          );
-        }
-      })
-      .catch((e) => {
-        const msg = typeof e === "string" ? e : (e as Error)?.message ?? String(e);
-        setError(`SIS error: ${msg}`);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
+  const { entries, courses, live, loading, error } = useSchedule();
   const courseById = (id: string) => courses.find((c) => c.id === id);
   const days = live ? dayLabels : dayLabels.slice(0, 5);
 
@@ -62,7 +27,7 @@ export function Schedule() {
         )}
       </div>
 
-      {error && (
+      {error && !live && (
         <div className="card" style={{ marginBottom: 14, borderColor: "var(--amber)", color: "var(--amber)", fontSize: 13 }}>
           {error}
         </div>

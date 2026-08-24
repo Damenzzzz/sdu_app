@@ -1,5 +1,6 @@
 import type { Daily } from "../data/types";
-import { schedule, courseById, leaderboard } from "../data/mock";
+import { leaderboard } from "../data/mock";
+import { useSchedule } from "../sdu/useSchedule";
 import { Icon } from "../components/Icon";
 import type { ViewKey } from "../components/Sidebar";
 
@@ -19,8 +20,10 @@ export function Dashboard({
   studentName: string;
   onNavigate: (v: ViewKey) => void;
 }) {
+  const { entries, courses } = useSchedule();
+  const courseById = (id?: string) => courses.find((c) => c.id === id);
   const ti = todayIndex();
-  const todays = schedule
+  const todays = entries
     .filter((s) => s.day === ti)
     .sort((a, b) => a.start.localeCompare(b.start));
   const me = leaderboard.find((r) => r.isMe);
