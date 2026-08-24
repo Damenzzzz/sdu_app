@@ -1,25 +1,58 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { chat, detectProvider, type ChatMessage, type ProviderStatus } from "../ai/provider";
+import { useSchedule } from "../sdu/useSchedule";
+import { useDailies } from "../store/useDailies";
 import { Icon } from "../components/Icon";
 
-const suggestions = [
-  "Turn my Calculus syllabus into daily tasks",
-  "Plan my study day around today's classes",
-  "Explain eigenvalues simply",
-];
+function todayIndex() {
+  const d = new Date().getDay();
+  return d === 0 || d === 6 ? 0 : d - 1;
+}
 
 export function AI() {
   const [status, setStatus] = useState<ProviderStatus>("none");
+  const { entries, courses } = useSchedule();
+  const dailies = useDailies();
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
-        "Hi! I'm your SDUmi study assistant. Ask me to plan your day, break down a syllabus, or explain a topic.",
+        "Hi! I'm your SDUmi study assistant. I can see your courses, today's classes and your tasks — ask me to plan your day, break a course into tasks, or explain a topic.",
     },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
+
+  // Snapshot of the student's real data, sent to the model as context.
+  const context = useMemo(() => {
+    const ti = todayIndex();
+    const todays = entries
+      .filter((e) => e.day === ti)
+      .sort((a, b) => a.start.localeCompare(b.start))
+      .map((e) => {
+        const c = courses.find((x) => x.id === e.courseId);
+        return `${e.start}-${e.end} ${c?.code ?? e.courseId}${e.room ? " (" + e.room + ")" : ""}`;
+      });
+    const courseList = courses.map((c) => `${c.code}${c.title ? " " + c.title : ""}`);
+    const pending = dailies.items.filter((d) => !d.done).map((d) => d.title);
+    return [
+      "STUDENT CONTEXT:",
+      `Courses: ${courseList.join("; ") || "unknown"}`,
+      `Today's classes: ${todays.join("; ") || "none"}`,
+      `Pending tasks: ${pending.join("; ") || "none"}`,
+    ].join("\n");
+  }, [entries, courses, dailies.items]);
+
+  const suggestions = useMemo(() => {
+    const firstCourse = courses[0]?.code ?? "my course";
+    return [
+      "Plan my study day around today's classes",
+      `Break ${firstCourse} into 3 daily tasks`,
+      "What should I focus on this week?",
+    ];
+  }, [courses]);
 
   useEffect(() => {
     detectProvider().then(setStatus);
@@ -37,7 +70,7 @@ export function AI() {
     setInput("");
     setBusy(true);
     try {
-      const reply = await chat(next.filter((m) => m.role !== "system"));
+      const reply = await chat(next.filter((m) => m.role !== "system"), context);
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } finally {
       setBusy(false);
