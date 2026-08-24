@@ -1,0 +1,54 @@
+name: Release
+
+# Builds SDUmi installers for Windows + macOS in the cloud and attaches them to
+# a GitHub Release. Trigger by pushing a tag like `v0.1.0`, or run manually.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+          - platform: macos-latest
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sdumi/src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: sdumi
+
+      - name: Build & release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: sdumi
+          tagName: ${{ github.ref_name }}
+          releaseName: "SDUmi ${{ github.ref_name }}"
+          releaseBody: "Download the installer for your OS below and run it."
+          releaseDraft: true
+          prerelease: false
