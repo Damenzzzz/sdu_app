@@ -14,7 +14,11 @@ export type IconName =
   | "flame"
   | "logout"
   | "clock"
-  | "chart";
+  | "chart"
+  | "library"
+  | "upload"
+  | "x"
+  | "edit";
 
 const paths: Record<IconName, string> = {
   dashboard: "M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 14h7v7H3z",
@@ -30,6 +34,10 @@ const paths: Record<IconName, string> = {
   logout: "M15 4h4v16h-4M10 8l-4 4 4 4M6 12h9",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
   chart: "M3 21h18M6 21V11M12 21V4M18 21V8",
+  library: "M4 4h5v16H4zM9 4h5v16H9zM14 6l4 14 1-1",
+  upload: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  x: "M6 6l12 12M18 6L6 18",
+  edit: "M4 20h4L18 10l-4-4L4 16zM14 6l4 4",
 };
 
 export function Icon({ name, size = 18 }: IconProps) {

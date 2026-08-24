@@ -433,3 +433,36 @@
   text-align: center;
   padding: 24px;
 }
+
+/* ---- Modal (PDF viewer) ---- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 3vh;
+  animation: fadeIn 0.2s ease;
+}
+.modal {
+  width: min(1000px, 92vw);
+  height: 90vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: popIn 0.25s var(--ease);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
