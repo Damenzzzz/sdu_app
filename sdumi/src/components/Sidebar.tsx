@@ -31,11 +31,13 @@ export function Sidebar({
   onNavigate,
   dailyBadge,
   studentName,
+  onOpenSearch,
 }: {
   active: ViewKey;
   onNavigate: (v: ViewKey) => void;
   dailyBadge?: number;
   studentName: string;
+  onOpenSearch?: () => void;
 }) {
   const initials = studentName
     .split(" ")
@@ -52,6 +54,12 @@ export function Sidebar({
           SDU<span>mi</span>
         </div>
       </div>
+
+      <button className="search-btn" onClick={onOpenSearch}>
+        <Icon name="sparkles" size={15} />
+        <span>Search…</span>
+        <span className="kbd">⌘K</span>
+      </button>
 
       <nav className="nav">
         {nav.map((n) => (

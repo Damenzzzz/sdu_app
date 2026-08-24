@@ -14,6 +14,7 @@ import { Profile } from "./views/Profile";
 import { Settings } from "./views/Settings";
 import { Login } from "./views/Login";
 import { ConfettiLayer } from "./components/Confetti";
+import { CommandPalette } from "./components/CommandPalette";
 import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
 import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
@@ -28,7 +29,20 @@ function App() {
   const [validating, setValidating] = useState(true);
   const [view, setView] = useState<ViewKey>("dashboard");
   const dailies = useDailies();
+  const [paletteOpen, setPaletteOpen] = useState(false);
   useClassReminders(!!session?.real);
+
+  // Global ⌘K / Ctrl+K opens search.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // A stored session in the desktop app is only valid if the Rust scraper still
   // holds an authenticated SIS session (its cookie jar is per-process, so it is
@@ -102,11 +116,13 @@ function App() {
   return (
     <div className="app">
       <ConfettiLayer />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={setView} />
       <Sidebar
         active={view}
         onNavigate={setView}
         dailyBadge={pending}
         studentName={session.studentName}
+        onOpenSearch={() => setPaletteOpen(true)}
       />
       <main className="main">
         {view === "dashboard" && (
