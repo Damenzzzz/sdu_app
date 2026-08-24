@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { isTauri } from "../sdu/tauri";
-import { fetchTerms, fetchGrades, computeGPA, type GradeRow, type TermOption } from "../sdu/grades";
+import { fetchTerms, fetchGrades, fetchGpaTrend, computeGPA, type GradeRow, type TermOption, type TermGPA } from "../sdu/grades";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { GpaChart } from "../components/GpaChart";
 import { Icon } from "../components/Icon";
 
 function gradeColor(g: string): string {
@@ -19,6 +20,7 @@ export function Grades() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [live, setLive] = useState(false);
+  const [trend, setTrend] = useState<TermGPA[]>([]);
 
   useEffect(() => {
     if (!isTauri()) {
@@ -30,6 +32,7 @@ export function Grades() {
       .then(({ terms, current }) => {
         setTerms(terms);
         setCurrent(current);
+        fetchGpaTrend(terms).then(setTrend).catch(() => {});
         return fetchGrades(current);
       })
       .then((r) => {
@@ -95,6 +98,13 @@ export function Grades() {
           <span className="stat-value"><AnimatedNumber value={credits || totalCredits} /></span>
         </div>
       </div>
+
+      {trend.length >= 2 && (
+        <div className="card lift" style={{ marginBottom: 16 }}>
+          <div className="section-title">GPA trend</div>
+          <GpaChart data={trend} />
+        </div>
+      )}
 
       <div className="card">
         {rows.length === 0 && !loading ? (
