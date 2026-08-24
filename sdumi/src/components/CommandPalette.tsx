@@ -23,7 +23,6 @@ const PAGES: Item[] = [
   { id: "p-dailies", title: "Dailies", subtitle: "Page", icon: "check", view: "dailies" },
   { id: "p-focus", title: "Focus", subtitle: "Page", icon: "clock", view: "focus" },
   { id: "p-leaderboard", title: "Leaderboard", subtitle: "Page", icon: "trophy", view: "leaderboard" },
-  { id: "p-ai", title: "AI Assistant", subtitle: "Page", icon: "sparkles", view: "ai" },
   { id: "p-profile", title: "Profile", subtitle: "Page", icon: "settings", view: "profile" },
 ];
 
