@@ -9,7 +9,6 @@ import { Books } from "./views/Books";
 import { Dailies } from "./views/Dailies";
 import { Focus } from "./views/Focus";
 import { Leaderboard } from "./views/Leaderboard";
-import { AI } from "./views/AI";
 import { Profile } from "./views/Profile";
 import { Settings } from "./views/Settings";
 import { Login } from "./views/Login";
@@ -150,7 +149,6 @@ function App() {
         {view === "dailies" && <Dailies dailies={dailies} />}
         {view === "focus" && <Focus />}
         {view === "leaderboard" && <Leaderboard />}
-        {view === "ai" && <AI />}
         {view === "profile" && <Profile studentId={session.studentId} studentName={session.studentName} />}
         {view === "settings" && <Settings onLogout={logout} />}
       </main>
