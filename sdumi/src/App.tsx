@@ -22,6 +22,7 @@ import { useClassReminders } from "./sdu/useClassReminders";
 import { fetchProfile, cachedProfile } from "./sdu/profile";
 import { isBackendConfigured } from "./backend/config";
 import { pushPresence, computeScore } from "./backend/leaderboard";
+import { runUpdateCheck } from "./updater";
 import { loadJSON } from "./store/persist";
 import { currentStreak } from "./store/streak";
 
@@ -32,6 +33,11 @@ function App() {
   const dailies = useDailies();
   const [paletteOpen, setPaletteOpen] = useState(false);
   useClassReminders(!!session?.real);
+
+  // Check for app updates once on launch.
+  useEffect(() => {
+    void runUpdateCheck();
+  }, []);
 
   // Global ⌘K / Ctrl+K opens search.
   useEffect(() => {
