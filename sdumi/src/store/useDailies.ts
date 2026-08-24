@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Daily } from "../data/types";
 import { loadJSON, saveJSON } from "./persist";
+import { recordCompletionToday } from "./streak";
 
 const KEY = "dailies";
 
@@ -27,11 +28,12 @@ export function useDailies() {
 
   const toggle = useCallback((id: string) => {
     setItems((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? { ...d, done: !d.done, completedAt: !d.done ? Date.now() : undefined }
-          : d
-      )
+      prev.map((d) => {
+        if (d.id !== id) return d;
+        const nowDone = !d.done;
+        if (nowDone) recordCompletionToday();
+        return { ...d, done: nowDone, completedAt: nowDone ? Date.now() : undefined };
+      })
     );
   }, []);
 
