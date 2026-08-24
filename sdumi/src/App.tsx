@@ -5,6 +5,7 @@ import { Dashboard } from "./views/Dashboard";
 import { Schedule } from "./views/Schedule";
 import { Syllabus } from "./views/Syllabus";
 import { Grades } from "./views/Grades";
+import { Books } from "./views/Books";
 import { Dailies } from "./views/Dailies";
 import { Focus } from "./views/Focus";
 import { Leaderboard } from "./views/Leaderboard";
@@ -109,6 +110,7 @@ function App() {
         {view === "schedule" && <Schedule />}
         {view === "syllabus" && <Syllabus />}
         {view === "grades" && <Grades />}
+        {view === "books" && <Books />}
         {view === "dailies" && <Dailies dailies={dailies} />}
         {view === "focus" && <Focus />}
         {view === "leaderboard" && <Leaderboard />}
