@@ -41,6 +41,12 @@ export async function sduFetch(module: string): Promise<string> {
   return invoke<string>("sdu_fetch", { module });
 }
 
+// Fetch a binary resource behind the session (e.g. student photo) as a data URL.
+export async function sduFetchB64(path: string): Promise<string> {
+  const invoke = await getInvoke();
+  return invoke<string>("sdu_fetch_b64", { path });
+}
+
 export async function sduIsLoggedIn(): Promise<boolean> {
   const invoke = await getInvoke();
   return invoke<boolean>("sdu_is_logged_in");
