@@ -14,6 +14,9 @@ import { Login } from "./views/Login";
 import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
 import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
+import { isBackendConfigured } from "./backend/config";
+import { pushPresence, computeScore } from "./backend/leaderboard";
+import { loadJSON } from "./store/persist";
 
 function App() {
   const [session, setSession] = useState<Session | null>(() => getSession());
@@ -49,6 +52,23 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  // Online presence + score heartbeat (only when a live backend is configured).
+  useEffect(() => {
+    if (!isBackendConfigured() || !session?.real) return;
+    const push = () => {
+      const focus = loadJSON<number>("focusSessions", 0);
+      void pushPresence({
+        id: session.studentId,
+        name: session.studentName,
+        points: computeScore(dailies.doneCount, focus),
+        streak: 0,
+      });
+    };
+    push();
+    const t = setInterval(push, 60_000);
+    return () => clearInterval(t);
+  }, [session, dailies.doneCount]);
 
   if (validating) {
     return <div className="login-wrap" />;
