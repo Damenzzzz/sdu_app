@@ -28,10 +28,14 @@ export interface ChatMessage {
 
 const SYSTEM_PROMPT =
   "You are SDUmi Assistant, a helpful study companion for SDU students. " +
-  "Help with planning the day, breaking syllabus topics into tasks, and explaining course material concisely.";
+  "Help with planning the day, breaking a syllabus into daily tasks, and explaining course material concisely. " +
+  "Be brief and practical. When the student's real courses/schedule are provided below, use them.";
 
-export async function chat(messages: ChatMessage[]): Promise<string> {
+// `context` is a short snapshot of the student's real data (courses, today's
+// classes, pending tasks) so answers are personalised.
+export async function chat(messages: ChatMessage[], context?: string): Promise<string> {
   const status = await detectProvider();
+  const system = context ? `${SYSTEM_PROMPT}\n\n${context}` : SYSTEM_PROMPT;
 
   if (status === "local") {
     const res = await fetch(`${OLLAMA_URL}/api/chat`, {
@@ -40,7 +44,7 @@ export async function chat(messages: ChatMessage[]): Promise<string> {
       body: JSON.stringify({
         model: OLLAMA_MODEL,
         stream: false,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: system }, ...messages],
       }),
     });
     const data = await res.json();
