@@ -46,7 +46,7 @@ export function Leaderboard() {
             All SDU
           </button>
           <button className={`btn ${scope === "faculty" ? "btn-primary" : "btn-ghost"}`} onClick={() => setScope("faculty")}>
-            My faculty
+            My group
           </button>
         </div>
       </div>
