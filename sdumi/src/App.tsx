@@ -11,6 +11,7 @@ import { Leaderboard } from "./views/Leaderboard";
 import { AI } from "./views/AI";
 import { Settings } from "./views/Settings";
 import { Login } from "./views/Login";
+import { ConfettiLayer } from "./components/Confetti";
 import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
 import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
@@ -76,7 +77,12 @@ function App() {
   }
 
   if (!session) {
-    return <Login onSignedIn={setSession} />;
+    return (
+      <>
+        <ConfettiLayer />
+        <Login onSignedIn={setSession} />
+      </>
+    );
   }
 
   const pending = dailies.items.filter((d) => !d.done).length;
@@ -89,6 +95,7 @@ function App() {
 
   return (
     <div className="app">
+      <ConfettiLayer />
       <Sidebar
         active={view}
         onNavigate={setView}

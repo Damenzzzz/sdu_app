@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Daily } from "../data/types";
 import { courses, courseById } from "../data/mock";
+import { celebrate } from "../components/Confetti";
 import { Icon } from "../components/Icon";
 
 type DailiesApi = {
@@ -25,6 +26,11 @@ export function Dailies({ dailies }: { dailies: DailiesApi }) {
   const pct = dailies.total ? Math.round((dailies.doneCount / dailies.total) * 100) : 0;
   const pending = dailies.items.filter((d) => !d.done);
   const done = dailies.items.filter((d) => d.done);
+  const allDone = dailies.total > 0 && dailies.doneCount === dailies.total;
+
+  useEffect(() => {
+    if (allDone) celebrate();
+  }, [allDone]);
 
   return (
     <div className="fade-in">
@@ -67,7 +73,7 @@ export function Dailies({ dailies }: { dailies: DailiesApi }) {
       <div className="grid grid-2">
         <div className="card">
           <div className="section-title">To do · {pending.length}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {pending.length === 0 && <div className="empty">Nothing pending. Add a task above ↑</div>}
             {pending.map((d) => (
               <DailyRow key={d.id} d={d} onToggle={dailies.toggle} onRemove={dailies.remove} />
@@ -77,7 +83,7 @@ export function Dailies({ dailies }: { dailies: DailiesApi }) {
 
         <div className="card">
           <div className="section-title">Completed · {done.length}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {done.length === 0 && <div className="empty">No completed tasks yet.</div>}
             {done.map((d) => (
               <DailyRow key={d.id} d={d} onToggle={dailies.toggle} onRemove={dailies.remove} />
