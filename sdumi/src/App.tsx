@@ -19,6 +19,7 @@ import { useDailies } from "./store/useDailies";
 import { getSession, signOut, type Session } from "./auth/session";
 import { isTauri, sduIsLoggedIn } from "./sdu/tauri";
 import { useClassReminders } from "./sdu/useClassReminders";
+import { fetchProfile, cachedProfile } from "./sdu/profile";
 import { isBackendConfigured } from "./backend/config";
 import { pushPresence, computeScore } from "./backend/leaderboard";
 import { loadJSON } from "./store/persist";
@@ -73,6 +74,13 @@ function App() {
     };
   }, []);
 
+  // Prefetch the profile once on login so the leaderboard "group" (major) and
+  // photo are cached for presence + the Profile view.
+  useEffect(() => {
+    if (!isTauri() || !session?.real) return;
+    if (!cachedProfile()) fetchProfile(session.studentId).catch(() => {});
+  }, [session]);
+
   // Online presence + score heartbeat (only when a live backend is configured).
   useEffect(() => {
     if (!isBackendConfigured() || !session?.real) return;
@@ -81,6 +89,7 @@ function App() {
       void pushPresence({
         id: session.studentId,
         name: session.studentName,
+        faculty: cachedProfile()?.major || "",
         points: computeScore(dailies.doneCount, focus),
         streak: currentStreak(),
       });
