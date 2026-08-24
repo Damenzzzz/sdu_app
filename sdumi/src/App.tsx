@@ -69,7 +69,9 @@ function App() {
       });
     };
     push();
-    const t = setInterval(push, 60_000);
+    // 2.5-min heartbeat keeps write volume low at 2000+ users while presence
+    // still reflects "online" within the 2-min window comfortably... use 90s.
+    const t = setInterval(push, 90_000);
     return () => clearInterval(t);
   }, [session, dailies.doneCount]);
 
