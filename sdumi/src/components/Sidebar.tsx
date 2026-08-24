@@ -4,6 +4,7 @@ export type ViewKey =
   | "dashboard"
   | "schedule"
   | "syllabus"
+  | "grades"
   | "dailies"
   | "focus"
   | "leaderboard"
@@ -14,6 +15,7 @@ const nav: { key: ViewKey; label: string; icon: IconName }[] = [
   { key: "dashboard", label: "Dashboard", icon: "dashboard" },
   { key: "schedule", label: "Schedule", icon: "calendar" },
   { key: "syllabus", label: "Syllabus", icon: "book" },
+  { key: "grades", label: "Grades", icon: "chart" },
   { key: "dailies", label: "Dailies", icon: "check" },
   { key: "focus", label: "Focus", icon: "clock" },
   { key: "leaderboard", label: "Leaderboard", icon: "trophy" },
